@@ -63,14 +63,14 @@ def generate_logs(count=5):
 
 # TEST RUN
 if __name__ == "__main__":
-    print("Firing 5 dummy logs to the Consumer...\n")
-    dummy_data = generate_logs(5)
+    print("Firing 1000 dummy logs to the Consumer...\n")
+    dummy_data = generate_logs(1000)
 
     for item in dummy_data:
         try:
             # Send the JSON log to our Flask Consumer
             response = requests.post("http://consumer:5001/ingest", json=item)
             print(f"Sent log. Server responded: {response.status_code}")
-            time.sleep(1)  # Wait 1 second between sending logs so we can read the terminal
+            #time.sleep(1)  # Wait 1 second between sending logs so we can read the terminal
         except Exception as e:
             print("Failed to send. Is the consumer running?")
