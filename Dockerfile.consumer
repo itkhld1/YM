@@ -1,0 +1,18 @@
+# Use official lightweight Python image
+FROM python:3.9-slim
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the requirements file and install dependencies
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+# Copy our consumer script into the container
+COPY consumer.py .
+
+# Open port 5001
+EXPOSE 5001
+
+# Command to run when the container starts
+CMD ["python", "consumer.py"]

@@ -1,8 +1,8 @@
+import requests
 import random
 import uuid
 import time
 from datetime import datetime
-
 
 # 1. THE DOMAIN OBJECT
 class LogEntry:
@@ -63,8 +63,14 @@ def generate_logs(count=5):
 
 # TEST RUN
 if __name__ == "__main__":
-    print("Generating 3 dummy logs...\n")
-    dummy_data = generate_logs(3)
+    print("Firing 5 dummy logs to the Consumer...\n")
+    dummy_data = generate_logs(5)
 
     for item in dummy_data:
-        print(item)
+        try:
+            # Send the JSON log to our Flask Consumer
+            response = requests.post("http://consumer:5001/ingest", json=item)
+            print(f"Sent log. Server responded: {response.status_code}")
+            time.sleep(1)  # Wait 1 second between sending logs so we can read the terminal
+        except Exception as e:
+            print("Failed to send. Is the consumer running?")
