@@ -44,27 +44,32 @@ class HtmlFormatterStrategy(formatterStrategy):
     def format(self, data):
         html = "<ul>\n"
         for key, value in data.items():
-            html += f"<li><strong>{key}:<\strong> {value}</li>\n"
-            html += "</ul>\n"
-            return html
+            html += f"<li><strong>{key}:</strong> {value}</li>\n"
+        html += "</ul>"
+        return html
 
-# Stage 1: KVKK / GDPR Filtering & Performance
+# Stage 1: KVKK / GDPR Anonymization (Security)
 class KVKKFilterHandler(AbstractHandler):
     def handle(self, request_data):
-        print("Stage 1: KVKK Filtering....")
-
-        # PERFORMANCE: Drop unimportant logs entirely
-        if request_data.get('level') == "DEBUG":
-            print("     -> DEBUG log detected. Dropping to save resources.")
-            return None #breaks the chain
+        print("Stage 1: KVKK Anonymization....")
 
         # PRIVACY: Mask the credit card
         if request_data.get('credit_card'):
-            request_data['credit_card'] = "****-****-****-***" + request_data['credit_card'][-2]
+            request_data['credit_card'] = "****-****-****-" + request_data['credit_card'][-4:]
 
         # PRIVACY: Mask the password
         if request_data.get('password'):
-            request_data['password'] = "*********"
+            request_data['password'] = "********"
+
+        # PRIVACY: Mask the email
+        if request_data.get('email'):
+            parts = request_data['email'].split('@')
+            if len(parts) == 2:
+                request_data['email'] = parts[0][0] + "***@" + parts[1]
+
+        # PRIVACY: Mask user_id (TC Kimlik No simulation)
+        if request_data.get('user_id'):
+            request_data['user_id'] = "ID-***" + str(request_data['user_id'])[-2:]
 
         return super().handle(request_data)
 
@@ -72,16 +77,20 @@ class KVKKFilterHandler(AbstractHandler):
 class EnrichmentHandler(AbstractHandler):
     def handle(self, request_data):
         print("Stage 2: Data Enrichment...")
-        # Let's add a fake geographical region based on user_id to "enrich" the data
-        if request_data.get('user_id'):
-            request_data['region'] = 'EU-West' if request_data['user_id'] % 2 == 0 else 'EU-East'
+
+        # Adding mandatory tags for microservices
+        request_data['sender_id'] = request_data.get('user_id')
+        request_data['transaction_no'] = request_data.get('token')
+        request_data['status'] = "CRITICAL" if request_data.get('level') == "ERROR" else "NORMAL"
+        request_data['message'] = f"Processed log for {request_data.get('user_id')}"
+        request_data['debug_info'] = f"Level: {request_data.get('level')}, Time: {request_data.get('transaction_time')}"
 
         return super().handle(request_data)
 
 # Stage 3: Formatting (Biçimlendirme)
 class FormattingHandler(AbstractHandler):
     def handle(self, request_data):
-        print("Stage 3 Applying Strategy Pattern for Formatting...")
+        print("Stage 3: Applying Strategy Pattern for Formatting...")
 
         # Simulate a request coming from one of the three departments
         target_department = random.choice(["DEV", "GÜV", "SYS YÖN"])
