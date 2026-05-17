@@ -43,6 +43,7 @@ class LogBuilder:
         # Simulate realistic data: Not every log might have a credit card
         if random.choice([True, False]):
             self.log.credit_card = f"{random.randint(4000, 4999)}-{random.randint(1000, 9999)}-{random.randint(1000, 9999)}-{random.randint(1000, 9999)}"
+        self.log.message = f"User {self.log.user_id} performed an action with status {self.log.level}"
         return self
 
     def build(self):
@@ -63,14 +64,29 @@ def generate_logs(count=5):
 
 # TEST RUN
 if __name__ == "__main__":
-    print("Firing 1000 dummy logs to the Consumer...\n")
-    dummy_data = generate_logs(1000)
+    LOG_COUNT = 1000
+    print(f"Firing {LOG_COUNT} dummy logs to the Consumer...\n")
+    dummy_data = generate_logs(LOG_COUNT)
 
+    start_time = time.time()
+    success_count = 0
+    
     for item in dummy_data:
         try:
             # Send the JSON log to our Flask Consumer
             response = requests.post("http://consumer:5001/ingest", json=item)
-            print(f"Sent log. Server responded: {response.status_code}")
-            #time.sleep(1)  # Wait 1 second between sending logs so we can read the terminal
+            if response.status_code == 200:
+                success_count += 1
         except Exception as e:
-            print("Failed to send. Is the consumer running?")
+            print(f"Failed to send: {e}")
+
+    end_time = time.time()
+    total_time = end_time - start_time
+    
+    print("\n" + "="*40)
+    print("PERFORMANCE REPORT")
+    print(f"Total Logs Sent: {LOG_COUNT}")
+    print(f"Successful Ingestions: {success_count}")
+    print(f"Total Time Taken: {total_time:.2f} seconds")
+    print(f"Throughput: {LOG_COUNT / total_time:.2f} logs/second")
+    print("="*40)

@@ -6,7 +6,7 @@ services:
       context: .
       dockerfile: Dockerfile.consumer
     ports:
-      - "5001:5001"
+      - "5005:5001"
     networks:
       - pipeline_network
 
