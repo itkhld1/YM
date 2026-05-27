@@ -2,6 +2,9 @@
 
 Bu proje, bir borsa kuruluşu için geliştirilmiş, yüksek hacimli log verilerini işleyen bir ara katman (middleware) servisidir. Proje, birbirleriyle haberleşen iki ayrı Docker modülünden oluşmaktadır: Gerçek sistemi simüle eden **Producer** ve verileri işleyen **Consumer**.
 
+## 🤖 Yapay Zeka Kullanım Beyanı
+Yapay zeka araçlarından kodun belirli yapılarını kurarken destek aldım **Google Gemini** kullandim, ancak mimari kurgu ve tasarım kalıplarının entegrasyonu tarafımca proje isterlerine göre tasarlanmıştır.
+
 ## 🚀 Proje Bileşenleri ve Özellikleri
 
 Proje, ödev tanımında belirtilen aşağıdaki temel gereksinimleri başarıyla yerine getirmektedir:
@@ -43,7 +46,3 @@ docker-compose up --build
 Bu komut ile her iki konteyner ayağa kalkacak, Producer veri üretecek ve Consumer'ın konsolunda maskelenmiş, zenginleştirilmiş ve farklı formatlara çevrilmiş log akışı ile en sonda **Performans Raporu** görüntülenecektir.
 
 ---
-
-## 🤖 Yapay Zeka Kullanım Beyanı
-
-Bu projenin geliştirilmesi sürecinde, kod mimarisinin kurgulanması, tasarım kalıplarının (Design Patterns) Python dilinde en uygun şekilde projeye entegre edilmesi, hata ayıklama (debugging) süreçleri ve proje dökümantasyonunun düzenlenmesi aşamalarında **Google Gemini** yapay zeka asistanından destek alınmıştır. Yapay zeka aracı, bir yardımcı pilot (copilot) olarak kullanılmış; projenin temel algoritması ve ödev gereksinimlerine uygunluk kontrolleri tarafımca sağlanmıştır.
