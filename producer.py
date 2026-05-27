@@ -55,7 +55,7 @@ class LogBuilder:
 def generate_logs(count=5):
     logs = []
     for _ in range(count):
-        # Using the Builder to construct the log step-by-step
+        # Using the Builder to construct the log step by step
         builder = LogBuilder()
         log = builder.set_base_info().set_security_info().set_personal_info().build()
         logs.append(log.to_dict())
@@ -73,7 +73,7 @@ if __name__ == "__main__":
     
     for item in dummy_data:
         try:
-            # Send the JSON log to our Flask Consumer
+            # Send the JSON log to Flask Consumer
             response = requests.post("http://consumer:5001/ingest", json=item)
             if response.status_code == 200:
                 success_count += 1
