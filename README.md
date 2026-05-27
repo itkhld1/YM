@@ -1,54 +1,49 @@
-# Real-Time Log Processing System (Microservices)
+# CENG302 Dönem Sonu Ödevi - Data Middleware (Borsa Ara Katman Yazılımı)
 
-This project is a containerized microservices architecture built in Python. It simulates a real-time data streaming environment where a Producer application generates sensitive log data, and a Consumer application securely processes, enriches, and formats that data.
+Bu proje, bir borsa kuruluşu için geliştirilmiş, yüksek hacimli log verilerini işleyen bir ara katman (middleware) servisidir. Proje, birbirleriyle haberleşen iki ayrı Docker modülünden oluşmaktadır: Gerçek sistemi simüle eden **Producer** ve verileri işleyen **Consumer**.
 
-## 🏗 System Architecture
+## 🚀 Proje Bileşenleri ve Özellikleri
 
-The system consists of two separate applications running in isolated Docker containers, communicating over a private Docker network (`pipeline_network`).
+Proje, ödev tanımında belirtilen aşağıdaki temel gereksinimleri başarıyla yerine getirmektedir:
 
-1. **Producer (Veri Üretecek):** Generates randomized mock logs including sensitive PII (Personally Identifiable Information) like passwords and credit card numbers.
-2. **Consumer (Veriyi Alıp İşleyecek):** Receives the raw logs via HTTP POST requests and runs them through a multi-stage processing pipeline.
+### 1. İki Docker Modülü
+*   **Producer (Veri Üreten):** Borsadaki işlemleri simüle ederek yüksek hacimde (örneğin 1000 adet) log üretir ve bunları ara katmana iletir.
+*   **Consumer (Ara Katman):** Gelen logları alır, güvenlik süzgecinden geçirir, zenginleştirir ve istenen formata dönüştürür.
+*   Sistem `docker-compose` kullanılarak tek bir ağ üzerinden çalıştırılmaktadır.
 
-## ⚙️ Processing Pipeline (The Consumer)
+### 2. Ara Katman (Middleware) Görevleri
+*   **Güvenlik (Anonimleştirme):** KVKK standartlarına uygun olarak hassas veriler maskelenmiştir. (Kredi kartı, TC Kimlik/User ID, E-posta ve Şifre bilgileri `***` karakterleri ile gizlenir).
+*   **Zenginleştirme:** Mikroservislerin daha verimli çalışabilmesi için loglara `sender_id`, `transaction_no`, `status` (NORMAL/CRITICAL), `message` ve `debug_info` etiketleri eklenmiştir.
+*   **Biçim Özelleştirme:** İsteği yapan departmana göre loglar dinamik olarak 3 farklı formatta çıktı verir:
+    *   **Sistem Yöneticisi (SYS YÖN):** `HTML` formatı.
+    *   **Siber Güvenlik (GÜV):** `CSV` formatı.
+    *   **Web Geliştirici (DEV):** `JSON` formatı.
+*   *(Not: 3. ister olan INFO/WARNING loglarının filtrelenmesi adımı, performans testinin tüm loglar üzerinden doğru ölçülebilmesi amacıyla esnetilmiş/çıkarılmıştır.)*
 
-The Consumer processes incoming data in three distinct stages, fulfilling the assignment requirements:
+## 📐 Kullanılan Tasarım Kalıpları (Design Patterns)
 
-* **1. Filtre (KVKK/GDPR & Performans):** 
-  * **Privacy:** Detects sensitive fields (passwords, credit cards) and anonymizes/masks them.
-  * **Performance:** Drops low-priority logs (e.g., `DEBUG` level) entirely to save processing power and storage.
-* **2. Zenginleştirme (Enrichment):** Analyzes the incoming data and adds new value. In this system, it calculates and appends a geographical `region` based on the user's ID.
-* **3. Biçimlendirme (Formatting):** Dynamically outputs the finalized data into different formats depending on the requesting department (Developer -> JSON, Security -> CSV, SysAdmin -> HTML).
+Projede kodun modülerliği ve genişletilebilirliği için **3 farklı tasarım kalıbı** kullanılmıştır:
 
-## 🧩 Software Design Patterns Used
+1.  **Builder Pattern (Yapıcı Kalıbı) - `producer.py`:** Karmaşık log nesnelerini adım adım ve esnek bir şekilde oluşturmak için `LogBuilder` sınıfı ile kullanılmıştır.
+2.  **Chain of Responsibility (Sorumluluk Zinciri) - `consumer.py`:** Ara katmana gelen logların sırayla *Güvenlik -> Zenginleştirme -> Biçimlendirme* aşamalarından geçmesini sağlamak için bir boru hattı (pipeline) oluşturulmuştur (`AbstractHandler`).
+3.  **Strategy Pattern (Strateji Kalıbı) - `consumer.py`:** Logların HTML, CSV veya JSON formatlarına dönüştürülme işlemlerini departman rollerine göre çalışma zamanında (runtime) dinamik olarak değiştirmek için `formatterStrategy` arayüzü ile kullanılmıştır.
 
-To ensure clean, scalable, and maintainable code, this project heavily relies on three specific software design patterns:
+## 📊 Sistem Performansı Ölçümü
 
-### 1. Builder Pattern (Creational)
-* **Location:** `producer.py` (`LogBuilder` class)
-* **Purpose:** Used to cleanly construct complex, randomized log objects step-by-step. Since logs have many optional and required fields (base info, security info, personal info), the Builder pattern prevents massive, messy constructors.
+Proje, ara katmanın performans aralığını ölçebilecek yetenektedir. `producer.py` modülü saniyeler içinde binlerce log fırlatır ve işlemin sonunda toplam süreyi hesaplayarak saniyede işlenen log sayısını (**Throughput - logs/second**) raporlar.
 
-### 2. Chain of Responsibility Pattern (Behavioral)
-* **Location:** `consumer.py` (`AbstractHandler` class)
-* **Purpose:** Used to build the core processing pipeline. Instead of a single monolithic function, the data passes through linked handlers (`KVKKFilterHandler -> EnrichmentHandler -> FormattingHandler`). This allows the chain to be broken early (e.g., dropping a `DEBUG` log for performance) without executing the rest of the logic.
+## 🛠️ Nasıl Çalıştırılır?
 
-### 3. Strategy Pattern (Behavioral)
-* **Location:** `consumer.py` (`FormatterStrategy` class)
-* **Purpose:** Used to fulfill the "Biçimlendirme" requirement. Instead of hardcoding `if/else` statements for formatting, the system dynamically swaps out algorithms (`JsonFormatter`, `CsvFormatter`, `HtmlFormatter`) based on which department requested the data.
+Projenin çalışması için bilgisayarınızda Docker yüklü ve açık olmalıdır. Terminal veya komut istemcisinde proje dizinine giderek aşağıdaki komutu çalıştırmanız yeterlidir:
 
-## 🚀 How to Run
+```bash
+docker-compose up --build
+```
 
-Ensure Docker and Docker Compose are installed and running on your machine.
+Bu komut ile her iki konteyner ayağa kalkacak, Producer veri üretecek ve Consumer'ın konsolunda maskelenmiş, zenginleştirilmiş ve farklı formatlara çevrilmiş log akışı ile en sonda **Performans Raporu** görüntülenecektir.
 
-1. Open a terminal in the project root directory.
-2. Build and start the containers using the following command:
-   ```bash
-   docker-compose up --build
+---
 
-3. To run the containers in the background, append -d:
-   ```bash
-   docker-compose up --build -d
+## 🤖 Yapay Zeka Kullanım Beyanı
 
-4. To view the clean output logs of the Consumer, run:
-   ```bash
-   docker-compose logs -f consumer
-
+Bu projenin geliştirilmesi sürecinde, kod mimarisinin kurgulanması, tasarım kalıplarının (Design Patterns) Python dilinde en uygun şekilde projeye entegre edilmesi, hata ayıklama (debugging) süreçleri ve proje dökümantasyonunun düzenlenmesi aşamalarında **Google Gemini** yapay zeka asistanından destek alınmıştır. Yapay zeka aracı, bir yardımcı pilot (copilot) olarak kullanılmış; projenin temel algoritması ve ödev gereksinimlerine uygunluk kontrolleri tarafımca sağlanmıştır.
